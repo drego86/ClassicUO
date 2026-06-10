@@ -1,15 +1,16 @@
 ﻿// SPDX-License-Identifier: BSD-2-Clause
 
-using System.Collections.Generic;
+using ClassicUO.Assets;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.Scenes;
 using ClassicUO.Game.UI.Controls;
-using ClassicUO.Assets;
 using ClassicUO.Renderer;
 using ClassicUO.Resources;
 using ClassicUO.Utility;
 using ClassicUO.Utility.Logging;
 using Microsoft.Xna.Framework;
+using System;
+using System.Collections.Generic;
 using MathHelper = ClassicUO.Utility.MathHelper;
 
 namespace ClassicUO.Game.UI.Gumps.CharCreation
@@ -26,15 +27,15 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
 
         private readonly Point[] _townButtonsText =
         {
-            new Point(105, 130),
-            new Point(245, 90),
-            new Point(165, 200),
-            new Point(395, 160),
-            new Point(200, 305),
-            new Point(335, 250),
-            new Point(160, 395),
-            new Point(100, 250),
-            new Point(270, 130)
+            new Point(105, 130),//new haven
+            new Point(245, 90),//yew
+            new Point(165, 200),//minoc
+            new Point(395, 160),//britain
+            new Point(50, 50),//moonglow 200, 305  vesper
+            new Point(335, 250),//trinsic
+            new Point(160, 395),//jhelom
+            new Point(100, 250),//skara brea
+            new Point(270, 130)//vesper
         };
 
         public CreateCharSelectionCityGump(World world, byte profession, LoginScene scene) : base(world, 0, 0)
@@ -90,18 +91,26 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
                 Y = 440
             };
 
-
             if (Client.Game.UO.Version >= ClientVersion.CV_70130)
             {
-                Add(new GumpPic(62, 54, (ushort) (0x15D9 + map), 0));
+                // We force 0x15D9 so it always shows the Felucca background
+                Add(new GumpPic(62, 54, 0x15D9, 0));
                 Add(new GumpPic(57, 49, 0x15DF, 0));
-                _facetName.Text = _cityNames[map];
+
+                // Force the label to use the first name in your list (Firebriar)
+                _facetName.Text = _cityNames[1];
             }
-            else
-            {
-                Add(new GumpPic(57, 49, 0x1598, 0));
-                _facetName.IsVisible = false;
-            }
+            /* if (Client.Game.UO.Version >= ClientVersion.CV_70130)
+             {
+                 Add(new GumpPic(62, 54, (ushort) (0x15D9 + map), 0));
+                 Add(new GumpPic(57, 49, 0x15DF, 0));
+                 _facetName.Text = _cityNames[map];
+             }
+             else
+             {
+                 Add(new GumpPic(57, 49, 0x1598, 0));
+                 _facetName.IsVisible = false;
+             }*/
 
             Add(_facetName);
 
@@ -143,7 +152,10 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
             for (int i = 0; i < scene.Cities.Length; i++)
             {
                 CityInfo c = scene.GetCity(i);
-
+            
+                // --- ADD THIS DEBUG BLOCK ---
+                //Console.WriteLine($"[DEBUG] Index: {i} | City: {c.City} | IsNewCity: {c.IsNewCity}");
+                // ----------------------------
                 if (c == null)
                 {
                     continue;
@@ -161,8 +173,21 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
                         cityFacet = 5;
                     }
 
-                    x = 62 + MathHelper.PercetangeOf(Client.Game.UO.FileManager.Maps.MapsDefaultSize[cityFacet, 0] - 2048, c.X, 383);
+                    x = 62 + MathHelper.PercetangeOf(Client.Game.UO.FileManager.Maps.MapsDefaultSize[cityFacet, 0] - 2048, c.X, 383);//was 62
                     y = 54 + MathHelper.PercetangeOf(Client.Game.UO.FileManager.Maps.MapsDefaultSize[cityFacet, 1], c.Y, 384);
+
+                    switch (i)
+                    {
+                        case 0: x -= 50;y -= 50; break; // Tallenbrook
+                        case 1: x -= 60; break; // Eaglevale
+                        case 2: x -= 30; break; // Aelburn
+                        case 3: x -= 50; break; // Firebriar
+                        case 4: x -= 20; break; // Urkim
+                        case 5: x -= 75; break; // Silverash
+                        case 6: x -= 25;y -= 10; break; // Wildmist
+                        case 7: x -= 25; break; // Alaspar
+                        case 8: x -= 25; break; // Leviathos
+                    }
                 }
                 else if (i < _townButtonsText.Length)
                 {
@@ -204,13 +229,25 @@ namespace ClassicUO.Game.UI.Gumps.CharCreation
                 return;
             }
 
-            if (index >= _cityNames.Length)
-            {
-                index = (uint) (_cityNames.Length - 1);
-            }
-
-            _facetName.Text = _cityNames[index];
+            // Force it to always use index 0 ("Felucca")
+            _facetName.Text = _cityNames[0];
         }
+
+        /* private void SetFacet(uint index)
+         {
+
+            if (Client.Game.UO.Version < ClientVersion.CV_70130)
+             {
+                 return;
+             }
+
+             if (index >= _cityNames.Length)
+             {
+                 index = (uint) (_cityNames.Length - 1);
+             }
+
+             _facetName.Text = _cityNames[index];
+         }*/
 
 
         public override void OnButtonClick(int buttonID)
